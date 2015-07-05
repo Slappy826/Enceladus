@@ -32,9 +32,9 @@ function Sandbox:SetEnvironmentFunction(SandboxArg,Names,Function)
 	if SandboxArg == nil then
 		return error("[Sandbox NewSandboxItem] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!")
 	elseif type(Function) ~= "function" then
-		return error("[Sandbox SetEnvironmentFunction] Argument #2 must be a function",2)
+		return error("[Sandbox SetEnvironmentFunction] Argument #2 must be a string",2)
 	elseif type(Names) ~= "string" then
-		return error("[Sandbox SetEnvironmentFunction] Argument #3 must be a string",2)
+		return error("[Sandbox SetEnvironmentFunction] Argument #3 must be a function",2)
 	end
 	
 	for F in Names:gmatch("([^,]+)") do
@@ -93,6 +93,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 	local realObjects    = {}
 	local Connections    = {}
 	local OutputENV      = {}
+	local FakeObject
 	
 	
 	local lockedInstances = {}
@@ -166,7 +167,31 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 		}
 	}
 	
-	function Fake(...)
+	local function Real(...)
+		local Data = {...}
+		
+		for i, FakeObject in next, Data do
+			local RealObject = realObjects[FakeObject]
+			
+			if (not RealObject and type(FakeObject) == "table") then
+				RealObject = {}
+				
+				for i = 1, #fakeObjects do
+					RealObject[i] = nil
+				end
+				
+				for i,v in next, FakeObject do
+					RealObject[i] = Real(v)
+				end
+			end
+			
+			Data[i] = RealObject or FakeObject
+		end
+		
+		return unpack(Data)
+	end
+	
+	local function Fake(...)
 		local Data = {...}
 		
 		for i,RealObject in next,Data do
@@ -262,7 +287,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 		Object[Index] = Value
 	end
 	
-	function FakeObject(Object)
+	local function FakeObject(Object)
 		local Class = Object.className
 		local Proxy = newproxy(true)
 		local Meta  = getmetatable(Proxy)
@@ -319,30 +344,6 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 		return Proxy
 	end
 	
-	function Real(...)
-		local Data = {...}
-		
-		for i, FakeObject in next, Data do
-			local RealObject = realObjects[FakeObject]
-			
-			if (not RealObject and type(FakeObject) == "table") then
-				RealObject = {}
-				
-				for i = 1, #fakeObjects do
-					RealObject[i] = nil
-				end
-				
-				for i,v in next, FakeObject do
-					RealObject[i] = Real(v)
-				end
-			end
-			
-			Data[i] = RealObject or FakeObject
-		end
-		
-		return unpack(Data)
-	end
-	
 	local function SandboxFunction(Function)
 		return setfenv(function(...)
 			local Result = {ypcall(Function,...)}
@@ -356,7 +357,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 				return
 			end
 			
-			return unpack(Result,2)
+			return Fake(unpack(Result,2))
 		end,NewEnvironment)
 	end
 	
@@ -379,7 +380,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 			else
 				if UseGENV == true then
 					if Sandbox.GlobalENVFunctions[index] ~= nil then
-						return Sandbox.Sandboxes[Environment].Sandbox[index]
+						return Sandbox.GlobalENVFunctions[index]
 					else
 						if _ENV[index] == nil then
 							return _G[index]
