@@ -372,8 +372,6 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 		Sandbox.Sandboxes[Environment].Sandbox[i] = Fake(v)
 	end
 	
-	Sandbox.Sandboxes[Environment].Sandbox["game"] = FakeObject(game)	
-	
 	setmetatable(NewEnvironment,{
 		__index = function(self,index)
 			if Sandbox.Sandboxes[Environment].Sandbox[index] ~= nil then
@@ -394,7 +392,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 			end
 		end,
 		
-		__metatable = "The metatable is locked B"
+		__metatable = "The metatable is locked"
 	})
 	
 	return NewEnvironment
