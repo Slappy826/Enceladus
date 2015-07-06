@@ -59,8 +59,8 @@ function Command_Functions:Chatted(Message,Player)
     end
     for k,v in pairs(Command_Data["Commands"]) do
         if v["Command"] == Command_Before then
-            local Thread        = coroutine.create(v["Function"])
-            local Thread_Check  = {coroutine.resume(Thread,Command_After,Player)}
+            local Thread       = coroutine.create(v["Function"])
+            local Thread_Check = {coroutine.resume(Thread,Command_After,Player)}
             if not Thread_Check[1] then
                 spawn(function() error("[Command Module][" .. v["Name"] .. "]: " .. tostring(Thread_Check[2]),2) end)
             end
@@ -114,9 +114,18 @@ function Command:RemoveCommand(Name)
     end
     for k,v in pairs(Command_Data["Commands"]) do
         if v["Name"] == Name then
-            table.remove(Command_Data["Commands"],k)        
+            Command_Data["Commands"][k] = nil       
         end
     end
+end
+
+function Command:GetCommandTable()
+	assert(Command_Functions:Checkself(self,Command))
+	local Ret = {}
+	for k,v in pairs(Command_Data["Commands"]) do
+		Ret[k] = v
+	end
+	return Ret
 end
 
 function Command:Connect(Player)
