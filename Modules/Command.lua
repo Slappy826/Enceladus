@@ -114,9 +114,18 @@ function Command:RemoveCommand(Name)
     end
     for k,v in pairs(Command_Data["Commands"]) do
         if v["Name"] == Name then
-            table.remove(Command_Data["Commands"],k)        
+            Command_Data["Commands"][k] = nil       
         end
     end
+end
+
+function Command:GetCommandTable()
+	assert(Command_Functions:Checkself(self,Command))
+	local Ret = {}
+	for k,v in pairs(Command_Data["Commands"]) do
+		Ret[k] = v
+	end
+	return Ret
 end
 
 function Command:Connect(Player)
