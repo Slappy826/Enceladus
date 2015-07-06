@@ -245,11 +245,11 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 				
 				if not NewFakeObject then
 					if RealType == "function" then
-						NewFakeObject = function(...)
+						NewFakeObject = setfenv(function(...)
 							local Function = Fake(RealObject(Fake(Real(...))))
 							
-							return Function
-						end
+							return setfenv(Function,NewEnvironment)
+						end,NewEnvironment)
 					elseif RealType == "table" then
 						NewFakeObject = {}
 						
