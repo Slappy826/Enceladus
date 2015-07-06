@@ -308,7 +308,14 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 				local SFOUND = FCALLS[indexLower] and (FCALLS[indexLower][Class] or FCALLS[indexLower].General) or nil
 				
 				if SFOUND then
-					return SFOUND(Object,Result)
+					return setfenv(function(self,...)
+						if self == Proxy then
+							return Fake(Result(Object,Real(...)))
+						else
+							local F_ENV = setfenv(SFOUND(Object,Result),NewEnvironment)
+							return setfenv(Fake(F_ENV),NewEnvironment)
+						end
+					end,NewEnvironment)
 				elseif type(Result) == "function" then
 					return setfenv(function(self,...)
 						if self == Proxy then
