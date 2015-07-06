@@ -58,11 +58,11 @@ function Command_Functions:Chatted(Message,Player)
         end
     end
     for k,v in pairs(Command_Data["Commands"]) do
-        if k["Command"] == Command_Before then
-            local Thread        = coroutine.create(k["Function"])
+        if v["Command"] == Command_Before then
+            local Thread        = coroutine.create(v["Function"])
             local Thread_Check  = {coroutine.resume(Thread,Command_After,Player)}
             if not Thread_Check[1] then
-                spawn(function() error("[Command Module][" .. k["Name"] .. "]: " .. tostring(Thread_Check[2]),2) end)
+                spawn(function() error("[Command Module][" .. v["Name"] .. "]: " .. tostring(Thread_Check[2]),2) end)
             end
         end
     end
@@ -70,14 +70,14 @@ end
 
 function Command:SetSuffixRequired(bool)
     assert(Command_Functions:Checkself(self,Command))
-    if not bool or type(bool) ~= "boolean" then
+    if bool == nil or type(bool) ~= "boolean" then
         return error("SuffixRequired value is nil, or type is not boolean",2)
     end
     Command_Data["Settings"]["SuffixRequired"] = bool
 end
 
 
-function Comnmand:SetPrefix(Prefix)
+function Command:SetPrefix(Prefix)
     assert(Command_Functions:Checkself(self,Command))
     if not Prefix or type(Prefix) ~= "string" then
         return error("Prefix value is nil, or type is not string",2)
@@ -93,12 +93,12 @@ function Command:SetSuffix(Suffix)
     Command_Data["Settings"]["Suffix"] = Suffix
 end
 
-function Command:AddCommand(Name,Command,Function,...)
+function Command:AddCommand(Name,Cmd,Function,...)
     assert(Command_Functions:Checkself(self,Command))
     local C_Command = {
         ["Name"]        = Name,
-        ["Command"]     = Command,
-        ["Function"]   = Function
+        ["Command"]     = Cmd,
+        ["Function"]   	= Function
     }
     local P_Args = {...}
     for i = 1,select("#",...) do
@@ -129,10 +129,10 @@ function Command:Connect(Player)
             return false
         end
     end
-    local Con,Con = Player.Chatted:connect(function(Msg)
+    local Con,Con = nil,Player.Chatted:connect(function(Msg)
         Command_Functions:Chatted(Msg,Player)
     end)
-    Command_Data[Player] = Con
+    Command_Data["Connections"][Player] = Con
 end
 
 function Command:Disconnect(Player)
@@ -143,7 +143,7 @@ function Command:Disconnect(Player)
     for k,v in pairs(Command_Data["Connections"]) do
         if k == Player then
             pcall(function() v:disconnect() end)
-            table.remove(Command_Data["Connections"],k)
+            Command_Data[k] = nil
         end
     end
 end
