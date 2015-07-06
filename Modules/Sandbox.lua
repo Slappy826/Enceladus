@@ -12,29 +12,53 @@
 
 local _ENV = getfenv(0)
 
+local Data = {
+	AllowedIds = {
+		[249328298] = true,
+	}
+}
+
+local Instances = {
+	Locked = {},
+	LockedInstances = {}
+}
+
 local Sandbox = {
-	Instances = {
-		Locked = {}
-	},
 	Sandboxes = {},
-	GlobalENVFunctions = {},
+	GlobalENVFunctions = {
+		["require"] = function(assetId)
+			if Data.AllowedIds[assetId] then
+				return require(assetId)
+			else
+				return error("You cannot require this assetId",2)
+			end
+		end,
+	},
 }
 
 function Sandbox:LockInstance(Instance)
-	Sandbox.Instances.Locked[Instance] = true
+	Instances.Locked[Instance] = true
 end
 
-function Sandbox:UnlockInstance()
-	Sandbox.Instances.Locked[Instance] = nil
+function Sandbox:UnlockInstance(Instance)
+	Instances.Locked[Instance] = nil
+end
+
+function Sandbox:SetLockedInstanceClass(Class)
+	Instances.LockedInstances[Class] = true
+end
+
+function Sandbox:RemoveLockedInstanceClass(Class)
+	Instances.LockedInstances[Class] = nil
 end
 
 function Sandbox:SetEnvironmentFunction(SandboxArg,Names,Function)
 	if SandboxArg == nil then
-		return error("[Sandbox NewSandboxItem] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!")
+		return error("[Sandbox SetEnvironmentFunction] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!")
 	elseif type(Function) ~= "function" then
-		return error("[Sandbox SetEnvironmentFunction] Argument #2 must be a string",2)
+		return error("[Sandbox SetEnvironmentFunction] Argument #2 must be a function",2)
 	elseif type(Names) ~= "string" then
-		return error("[Sandbox SetEnvironmentFunction] Argument #3 must be a function",2)
+		return error("[Sandbox SetEnvironmentFunction] Argument #3 must be a string",2)
 	end
 	
 	for F in Names:gmatch("([^,]+)") do
@@ -104,9 +128,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 		["boolean"] = true,
 	}
 	
-	local ENVFunctions = {
-		
-	}
+	local ENVFunctions = {}
 	
 	local SetFunctions = {		
 		BlockedPlayerArgs = {
@@ -133,37 +155,58 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 					return error("You cannot use the method ClearAllChildren on Players",2)
 				end
 			end,
+			
+			GeneralBlockedMethod = function()
+				return function(self)
+					return error("You cannot use this method on a Player",2)
+				end
+			end,
 		},
 		
 		GeneralArgs = {
 			ClearAllChildren = function(item,value)
 				return function(self)
 					for i,v in pairs(self:GetChildren()) do
-						if Sandbox.Instances.Locked[v] ~= true then
+						if Instances.Locked[v] ~= true then
 							pcall(function() v:Destroy() end)
 						end
 					end
 				end
 			end,
+			
+			BlockedMethod = function()
+				return function(self)
+					return error("You cannot use this method on "..self,2)
+				end	
+			end
 		},
 	}
 	
 	local FCALLS = {
 		destroy_get = {
 			Player = SetFunctions.BlockedPlayerArgs.Destroy,
+			PlayerGui = SetFunctions.GeneralArgs.BlockedMethod,
 		},
-		
+		 
 		kick_get = {
 			Player = SetFunctions.BlockedPlayerArgs.Kick,
+			PlayerGui = SetFunctions.GeneralArgs.BlockedMethod,
 		},
 		
 		remove_get = {
-			Player = SetFunctions.BlockedPlayerArgs.Remove,	
+			Player = SetFunctions.BlockedPlayerArgs.Remove,
+			PlayerGui = SetFunctions.GeneralArgs.BlockedMethod,
 		},
 		
 		clearallchildren_get = {
-			Player  = SetFunctions.BlockedPlayerArgs.ClearAllChildren,
-			General = SetFunctions.GeneralArgs.ClearALlChildren,
+			Players  = SetFunctions.BlockedPlayerArgs.ClearAllChildren,
+			General = SetFunctions.GeneralArgs.ClearAllChildren,
+			PlayerGui = SetFunctions.GeneralArgs.BlockedMethod,
+		},
+		
+		parent_set = {
+			Player = SetFunctions.BlockedPlayerArgs.GeneralBlockedMethod,
+			PlayerGui = SetFunctions.GeneralArgs.BlockedMethod,
 		}
 	}
 	
@@ -249,13 +292,17 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 									end
 								end								
 								
+								for i,v in pairs(Result) do
+									Result[i] = setfenv(v,NewEnvironment)
+								end
+								
 								Connections[Result] = Connection
 								
 								return Result
 							end
 							
 							for i,v in pairs(NewFakeObject) do
-								setfenv(v,NewEnvironment)
+								NewFakeObject[i] = setfenv(v,NewEnvironment)
 							end
 							
 							elseif rawequal(pcall(game.IsA,RealObject,"Instance")) then
@@ -399,4 +446,4 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 	return NewEnvironment
 end --End of NewSandboxEnv Function
 
-return Sandbox
+return Sandbox --Might return a metatable with a call.
