@@ -23,6 +23,13 @@ local Instances = {
 	LockedInstances = {}
 }
 
+local Libraries = {
+	["RbxUtility"] = game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/CoolDoctorWho/Enceladus/master/ExternalHandles/Libraries/RbxUtility.lua",true),
+	["RbxStamper"] = game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/CoolDoctorWho/Enceladus/master/ExternalHandles/Libraries/RbxStamper.lua",true),
+	["RbxGui"] = game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/CoolDoctorWho/Enceladus/master/ExternalHandles/Libraries/RbxGui.lua",true),
+	["RbxGear"] = game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/CoolDoctorWho/Enceladus/master/ExternalHandles/Libraries/RbxGear.lua",true),
+}
+
 local Sandbox = {
 	Sandboxes = {},
 	GlobalENVFunctions = {
@@ -419,6 +426,14 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 	for i,v in pairs(Sandbox.Sandboxes[Environment].ENVLiterals) do
 		Sandbox.Sandboxes[Environment].Sandbox[i] = Fake(v)
 	end
+	
+	--[[Force Setting LoadLibrary]]--
+	
+	Sandbox.Sandboxes[Environment].Sandbox["LoadLibrary"] = SandboxFunction(function(Library)
+		if Libraries[Library] ~= nil then
+			return setfenv(loadstring(Libraries[Library]),NewEnvironment)()
+		end
+	end)
 	
 	setmetatable(NewEnvironment,{
 		__index = function(self,index)
