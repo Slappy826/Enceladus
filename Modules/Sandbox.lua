@@ -282,7 +282,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 							end --End of NewFakeObject:wait()
 							
 							function NewFakeObject:connect(F)
-								local Connection = RealObject.connect(Real(self),function(...)
+								local Connection = RealObject.connect(Real(self),setfenv(function(...)
 									local Success, Result = ypcall(F,Fake(...))
 									
 									if not Success then
@@ -290,7 +290,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 										error(Result)
 										return warn("Disconnected event because of exception")
 									end
-								end)
+								end),NewEnvironment)
 									
 								local Result = setmetatable({},{
 									__metatable = "The metatable is locked",
@@ -366,6 +366,8 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 				local indexLower = index:lower().."_get"
 				local SFOUND = FCALLS[indexLower] and (FCALLS[indexLower][Class] or FCALLS[indexLower].General) or nil
 				
+				
+				
 				if SFOUND then
 					return SFOUND(Object,Result)
 				elseif type(Result) == "function" then
@@ -388,6 +390,8 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 			
 			local indexLower = Index:lower().."_set"
 			local SFOUND = FCALLS[indexLower] and (FCALLS[indexLower][Class] or FCALLS[indexLower].General) or nil
+		
+			
 			
 			if SFOUND then
 				Success,Result = pcall(SMember,Object,Index,SFOUND(Object,Value))
