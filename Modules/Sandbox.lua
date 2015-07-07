@@ -43,6 +43,10 @@ local Sandbox = {
 	},
 }
 
+--[[Core Sandbox functions]]--
+
+local I_NEW = Instance.new
+
 function Sandbox:LockInstance(Instance)
 	Instances.Locked[Instance] = true
 end
@@ -113,6 +117,7 @@ function Sandbox:NewSandbox(Environment)
 		ENVUserdatas = {},
 		ENVLiterals  = {},
 		Sandbox      = {},
+		Libraries    = {},
 	}
 	
 	return Sandbox.Sandboxes[Environment]
@@ -427,11 +432,45 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 		Sandbox.Sandboxes[Environment].Sandbox[i] = Fake(v)
 	end
 	
-	--[[Force Setting LoadLibrary]]--
+	--[[Force Setting Functions and Tables]]--
+	
+	local InstanceTable = {
+		new = function(Instance,Parent)
+			if Instances.LockedInstances[Instance] then
+				return error("You cannot Instance Class ["..Instance.."]",2)
+			end
+			
+			local Success, Result = pcall(I_NEW,Instance,Real(Parent))
+			
+			if not Success then
+				error(Result)
+			else
+				return Fake(Result)
+			end
+		end
+	}
+	
+	local Instance_HANDLER = setmetatable({},{
+		__index = function(self,index)
+			if InstanceTable[index] ~= nil then
+				return InstanceTable[index]
+			else
+				InstanceTable[index] = Instance[index]
+				return InstanceTable[index]
+			end
+		end,
+		
+		__metatable = "The metatable is locked",
+	})
+	
+	Sandbox.Sandboxes[Environment].Sandbox["Instance"] = Instance_HANDLER
 	
 	Sandbox.Sandboxes[Environment].Sandbox["LoadLibrary"] = SandboxFunction(function(Library)
-		if Libraries[Library] ~= nil then
-			return setfenv(loadstring(Libraries[Library]),NewEnvironment)()
+		if Sandbox.Sandboxes[Environment].Libraries[Library] == nil then
+			Sandbox.Sandboxes[Environment].Libraries[Library] = setfenv(loadstring(Libraries[Library]),NewEnvironment)()
+			return Sandbox.Sandboxes[Environment].Libraries[Library]
+		else
+			return Sandbox.Sandboxes[Environment].Libraries[Library]
 		end
 	end)
 	
