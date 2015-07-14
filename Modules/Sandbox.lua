@@ -378,7 +378,14 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 				
 				
 				if SFOUND then
-					return SFOUND(Object,Result)
+					return setfenv(function(self,...)
+						if self == Proxy then
+							return Fake(SFOUND(Object,Result))
+						else
+							local F_ENV = setfenv(SFOUND(Object,Result),NewEnvironment)
+							return setfenv(Fake(F_ENV),NewEnvironment)
+						end
+					end,NewEnvironment)
 				elseif type(Result) == "function" then
 					return setfenv(function(self,...)
 						if self == Proxy then
