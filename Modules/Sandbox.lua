@@ -5,9 +5,12 @@
 	
 	Description : Sandbox Script
 	
-	Change Log :
+	Change Log  :
 
 	05/07/2015 - Pkamara - Started writing
+	
+	Ideas       : 
+		-Level Context 
 ]]--
 
 local _ENV = getfenv(0)
@@ -40,6 +43,7 @@ local Sandbox = {
 				return error("You cannot require this assetId",2)
 			end
 		end,
+	
 	},
 }
 
@@ -123,7 +127,7 @@ function Sandbox:NewSandbox(Environment)
 	return Sandbox.Sandboxes[Environment]
 end
 
-function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
+function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 	local NewEnvironment = {} -- The Environment where you functions will be called from
 	local fakeObjects    = {}
 	local realObjects    = {}
@@ -145,26 +149,32 @@ function Sandbox:SetNewSandbox(Environment,UseGENV) -- ...
 	local SetFunctions = {		
 		BlockedPlayerArgs = {
 			Kick = function()
-				return function()
+				return function(self)
 					return error("You cannot Kick Players",2)
 				end
 			end,
 			
 			Destroy = function()
-				return function()
+				return function(self)
 					return error("You cannot Destroy Players",2)
 				end
 			end,
 			
 			Remove = function()
-				return function()
+				return function(self)
 					return error("You cannot Remove Players",2)
 				end
 			end,
 			
 			ClearAllChildren = function()
 				return function(self)
-					return error("You cannot use the method ClearAllChildren on Players",2)
+					if self:IsA("Player") then
+						return error("You cannot use the method ClearAllChildren on Players",2)
+				--	else
+					--	for i,v in pairs(self:GetChildren()) do
+					--		v:Destroy()	
+					--	end
+					end
 				end
 			end,
 			
