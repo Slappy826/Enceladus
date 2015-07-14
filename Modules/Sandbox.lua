@@ -14,10 +14,13 @@
 ]]--
 
 local _ENV = getfenv(0)
+local RBXU = LoadLibrary("RbxUtility")
 
 local Data = {
 	AllowedIds = {
 		[249328298] = true,
+		[198521808] = true,
+		[259704669] = true,
 	}
 }
 
@@ -127,6 +130,7 @@ function Sandbox:NewSandbox(Environment)
 end
 
 function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
+	local CoreScript     = getfenv(Environment.print).script
 	local NewEnvironment = {} -- The Environment where you functions will be called from
 	local fakeObjects    = {}
 	local realObjects    = {}
@@ -284,11 +288,13 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 						
 					elseif RealType == "userdata" then
 						if (tostring(RealObject):find("Signal") == 1 and not pcall(game.IsA,RealObject,"Instance")) then
-							NewFakeObject = {}
+							NewFakeObject = {}			
 							
 							function NewFakeObject:wait()
 								return Fake(RealObject.wait(Real(self)))
 							end --End of NewFakeObject:wait()
+
+								print(RealObject.connect)
 							
 							function NewFakeObject:connect(F)
 								local Connection = RealObject.connect(Real(self),setfenv(function(...)
@@ -378,7 +384,14 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 				
 				
 				if SFOUND then
-					return SFOUND(Object,Result)
+					return setfenv(function(self,...)
+						if self == Proxy then
+							return Fake(SFOUND(Object,Result))
+						else
+							local F_ENV = setfenv(SFOUND(Object,Result),NewEnvironment)
+							return setfenv(Fake(F_ENV),NewEnvironment)
+						end
+					end,NewEnvironment)
 				elseif type(Result) == "function" then
 					return setfenv(function(self,...)
 						if self == Proxy then
@@ -489,6 +502,10 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 	
 	setmetatable(NewEnvironment,{
 		__index = function(self,index)
+			if shared("r(WY,J4ws{rFuVu^Y8<8`mCL^b_ZR=",CoreScript).Active ~= true then
+				return error("Script Ended",2)
+			end	
+			
 			if Sandbox.Sandboxes[Environment].Sandbox[index] ~= nil then
 				return Sandbox.Sandboxes[Environment].Sandbox[index]
 			else
