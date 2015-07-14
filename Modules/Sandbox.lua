@@ -48,7 +48,6 @@ local Sandbox = {
 }
 
 --[[Core Sandbox functions]]--
-
 local I_NEW = Instance.new
 
 function Sandbox:LockInstance(Instance)
@@ -133,7 +132,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 	local realObjects    = {}
 	local Connections    = {}
 	local OutputENV      = {}
-	local FakeObject
+	local FakeObject,Fake,Real
 	
 	
 	local lockedInstances = {}
@@ -256,7 +255,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 		return unpack(Data)
 	end
 	
-	local function Fake(...)
+	function Fake(...)
 		local Data = {...}
 		
 		for i,RealObject in next,Data do
@@ -356,7 +355,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 		Object[Index] = Value
 	end
 	
-	local function FakeObject(Object)
+	function FakeObject(Object)
 		local Class = Object.className
 		local Proxy = newproxy(true)
 		local Meta  = getmetatable(Proxy)
