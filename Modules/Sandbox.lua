@@ -394,19 +394,19 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 			elseif FCALLS[indexLower.."_get"] then
 				local Key = indexLower.."_get"
 				
-				if Sandbox.CacheFunc[Key] then
-					return Sandbox.CacheFunc[Key]
-				end
-				
 				local S,E = pcall(FCALLS[Key],Object)
 				
-				if S and E == Sandbox.CacheFunc then
+				if E == Sandbox.CacheFunc then
 					error(index.." is not a valid member of "..Class,2)
 				end
 				
 				if not S then error(E:match("%S+:%d+: (.*)$") or E,2) end
 				
 				if type(E) ~= "function" then return Fake(E) end
+				
+				if Sandbox.CacheFunc[Key] then
+					return Sandbox.CacheFunc[Key]
+				end
 				
 				E = Fake(E)
 				
