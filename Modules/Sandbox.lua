@@ -297,7 +297,9 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 						end
 						
 					elseif RealType == "userdata" then
-						if (tostring(RealObject):find("Signal") == 1 and not pcall(game.IsA,RealObject,"Instance")) then
+						if pcall(game.GetService,game,RealObject) then
+							NewFakeObject = FakeObject(RealObject)
+						elseif (tostring(RealObject):find("Signal") == 1 then
 							NewFakeObject = {}			
 							
 							function NewFakeObject:wait()
