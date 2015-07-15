@@ -494,7 +494,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 	end
 	
 	for i,v in pairs(Sandbox.Sandboxes[Environment].ENVUserdatas) do
-		Sandbox.Sandboxes[Environment].Sandbox[i] = FakeObject(v)
+		Sandbox.Sandboxes[Environment].Sandbox[i] = Fake(v)
 	end
 	
 	for i,v in pairs(Sandbox.Sandboxes[Environment].ENVLiterals) do
