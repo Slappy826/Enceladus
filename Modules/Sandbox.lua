@@ -406,7 +406,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 				
 				if not S then error(E:match("%S+:%d+: (.*)$") or E,2) end
 				
-				if type(E) ~= "string" then return Fake(E) end
+				if type(E) ~= "function" then return Fake(E) end
 				
 				E = Fake(E)
 				
