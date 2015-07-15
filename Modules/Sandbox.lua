@@ -38,6 +38,7 @@ local Libraries = {
 
 local Sandbox = {
 	Sandboxes = {},
+	CacheFunc = {},
 	GlobalENVFunctions = {
 		["require"] = function(assetId)
 			if Data.AllowedIds[assetId] then
@@ -201,7 +202,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 			
 			BlockedMethod = function()
 				return function(self)
-					return error("You cannot use this method on "..self,2)
+					return error(("You cannot use this method on %s"):format(self),2)
 				end	
 			end
 		},
@@ -234,6 +235,17 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 			PlayerGui = SetFunctions.GeneralArgs.BlockedMethod,
 		}
 	}
+	
+	FCALLS = {}
+	
+	function FCALLS.destroy_get()
+		return function(self)
+			if Instances.Locked[self] == true then
+				return error("Can't destroy a "..self.ClassName)
+			end 
+			self:Destroy()
+		end
+	end
 	
 	local function Real(...)
 		local Data = {...}
@@ -270,10 +282,8 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 				
 				if not NewFakeObject then
 					if RealType == "function" then
-						NewFakeObject = setfenv(function(...)
-							local Function = Fake(RealObject(Fake(Real(...))))
-							
-							return setfenv(Function,NewEnvironment)
+						NewFakeObject = setfenv(function(...)							
+							return Fake(RealObject(Real(...)))
 						end,NewEnvironment)
 					elseif RealType == "table" then
 						NewFakeObject = {}
@@ -375,15 +385,45 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 		function Meta:__index(index)
 			local Success,Result = pcall(GMember,Object,index)
 			
-			if not Success then
+			local indexLower = type(index) == "string" and index:lower()			
+			
+			if not indexLower then
+				error(Result:match("%S+:%d+: (.*)$") or Result,2)
+			elseif FCALLS[indexLower.."_get"] then
+				local Key = indexLower.."_get"
+				
+				if Sandbox.CacheFunc[Key] then
+					return Sandbox.CacheFunc[Key]
+				end
+				
+				local S,E = pcall(FCALLS[Key],Object)
+				
+				if S and E == Sandbox.CacheFunc then
+					error(index.." is not a valid member of "..Class,2)
+				end
+				
+				if not S then error(E:match("%S+:%d+: (.*)$") or E,2) end
+				
+				if type(E) ~= "string" then return Fake(E) end
+				
+				E = Fake(E)
+				
+				Sandbox.CacheFunc[Key] = E
+				
+				return E
+			elseif not Success then
+				error(index.." is not a valid member of "..Class,2) --Stack 2
+			end			
+			
+--[[			if type(index) ~= "string" then
+				error(Result:match("%S+:%d+: (.*)$") or Result,2)
+			elseif not Success then
 				error(index.." is not a valid member of "..Class,2) --Stack 2
 			else
 				local indexLower = index:lower().."_get"
 				local SFOUND = FCALLS[indexLower] and (FCALLS[indexLower][Class] or FCALLS[indexLower].General) or nil
 				
-				
-				
-				if SFOUND then
+				if SFOUND then				
 					return setfenv(function(self,...)
 						if self == Proxy then
 							return Fake(SFOUND(Object,Result))
@@ -391,13 +431,14 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 							local F_ENV = setfenv(SFOUND(Object,Result),NewEnvironment)
 							return setfenv(Fake(F_ENV),NewEnvironment)
 						end
-					end,NewEnvironment)
-				elseif type(Result) == "function" then
+					end,NewEnvironment)]]--
+				if type(Result) == "function" then
 					return setfenv(function(self,...)
 						if self == Proxy then
 							return Fake(Result(Object,Real(...)))
 						else
 							local F_ENV = setfenv(Object[index](self),NewEnvironment)
+							warn'Hi'
 							return setfenv(Fake(F_ENV),NewEnvironment)
 						end
 					end,NewEnvironment)
@@ -405,7 +446,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 					return Fake(Result)
 				end
 			end
-		end
+		--end
 		
 		function Meta:__newindex(Index,Value)
 			local Success,Result = true
@@ -461,9 +502,9 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 	--[[Force Setting Functions and Tables]]--
 	
 	local InstanceTable = {
-		new = function(Instance,Parent)
+		new = setfenv(function(Instance,Parent)
 			if Instances.LockedInstances[Instance] then
-				return error("You cannot Instance Class ["..Instance.."]",2)
+				return error(("You cannot Instance Class [%s]"):format(Instance),2)
 			end
 			
 			local Success, Result = pcall(I_NEW,Instance,Real(Parent))
@@ -473,7 +514,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 			else
 				return Fake(Result)
 			end
-		end
+		end,NewEnvironment)
 	}
 	
 	local Instance_HANDLER = setmetatable({},{
@@ -502,10 +543,6 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 	
 	setmetatable(NewEnvironment,{
 		__index = function(self,index)
-			if shared("r(WY,J4ws{rFuVu^Y8<8`mCL^b_ZR=",CoreScript).Active ~= true then
-				return error("Script Ended",2)
-			end	
-			
 			if Sandbox.Sandboxes[Environment].Sandbox[index] ~= nil then
 				return Sandbox.Sandboxes[Environment].Sandbox[index]
 			else
