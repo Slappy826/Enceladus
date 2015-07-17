@@ -15,6 +15,8 @@
 
 local _ENV = getfenv(0)
 local RBXU = LoadLibrary("RbxUtility")
+local _children = game.Children
+local _destroy = game.Destroy
 
 local Data = {
 	AllowedIds = {
@@ -192,7 +194,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 		GeneralArgs = {
 			ClearAllChildren = function(item,value)
 				return function(self)
-					for i,v in pairs(self:GetChildren()) do
+					for i,v in pairs(_children(self)) do
 						if Instances.Locked[v] ~= true then
 							pcall(function() v:Destroy() end)
 						end
@@ -243,7 +245,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels) -- ...
 			if Instances.Locked[self] == true then
 				return error("Can't destroy a "..self.ClassName)
 			end 
-			self:Destroy()
+			_destroy(self)
 		end
 	end
 	
