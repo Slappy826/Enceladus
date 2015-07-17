@@ -15,7 +15,7 @@
 
 local _ENV = getfenv(0)
 local RBXU = LoadLibrary("RbxUtility")
-local _children = game.Children
+local _children = game.GetChildren
 local _destroy = game.Destroy
 
 local Data = {
