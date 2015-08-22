@@ -78,7 +78,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			__newindex = nil,
 			
 			__call = function(self,key)
-				if key == "331-3a(mf5tQh7G/5h13Rek138`CD7asd" then
+				if key == "key" then
 					return Sandbox
 				end
 			end,		
