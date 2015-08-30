@@ -23,11 +23,20 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	local Destroy  = game.Destroy
 	local IsA      = game.IsA
 	local Remove   = game.Remove
+	local rget     = rawget
+	local rset     = rawset
+	local SandboxFunction
 	local ppcall   = pcall
+	local error    = error
+	local getfenv  = getfenv
+	local setfenv  = setfenv
+	local game     = game
+	local rawget   = rawget
+	local rawset   = rawset
 	
 	local Data = {
 		AllowedIds = {
-		--	[249328298] = true,
+			[249328298] = true,
 			--[198521808] = true,
 			--[259704669] = true,
 			--[198246567] = true,
@@ -46,7 +55,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		["RbxGear"] = game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/CoolDoctorWho/Enceladus/master/ExternalHandles/Libraries/RbxGear.lua",true),
 	}
 	
-	Sandbox = {
+	local Sandbox = {
 		Sandboxes = {},
 		CacheFunc = {},
 		GlobalENVFunctions = setmetatable({
@@ -78,7 +87,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			__newindex = nil,
 			
 			__call = function(self,key)
-				if key == "key" then
+				if key == "uwotm8" then
 					return Sandbox
 				end
 			end,		
@@ -106,7 +115,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	end
 	
 	function Sandbox:SetEnvironmentFunction(SandboxArg,Names,Function,Key)
-		if Key ~= "key" then
+		if Key ~= "" then
 			return error("Failed to assert")
 		end
 		if SandboxArg == nil then
@@ -123,7 +132,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	end
 	
 	function Sandbox:NewSandboxItem(SandboxArg,Names,Item,Key)
-		if Key ~= "key" then
+		if Key ~= "" then
 			return error("Failed to assert")
 		end
 		if SandboxArg == nil then
@@ -140,7 +149,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	end
 	
 	function Sandbox:NewLiteralItem(SandboxArg,Names,Item,Key)
-		if Key ~= "key" then
+		if Key ~= "" then
 			return error("Failed to assert")
 		end
 		if Sandbox.Sandboxes[SandboxArg] == nil then
@@ -181,6 +190,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		local realObjects    = {}
 		local Connections    = {}
 		local OutputENV      = {}
+		local is             = IsA
 		local FakeObject,Fake,Real
 		
 		
@@ -198,7 +208,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			BlockedPlayerArgs = {
 				Kick = function()
 					return function(self)
-						if self:IsA("Player") then
+						if self:is("Player") then
 							return error("You cannot Kick Players",2)
 						else
 							return error(('The function Kick is not a member of "%s"'):format(self.className))
@@ -208,31 +218,31 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				
 				Destroy = function()
 					return function(self)
-						if self:IsA("Player") then
+						if self:is("Player") then
 							return error("You cannot Destroy Players",2)
 						else
-							return pcall(Destroy,self)
+							return ppcall(Destroy,self)
 						end
 					end
 				end,
 				
 				Remove = function()
 					return function(self)
-						if self:IsA("Player") then
+						if self:is("Player") then
 							return error("You cannot Remove Players",2)
 						else
-							return pcall(Remove,self)
+							return ppcall(Remove,self)
 						end
 					end
 				end,
 				
 				ClearAllChildren = function()
 					return function(self)
-						if self:IsA("Player") then
+						if self:is("Player") then
 							return error("You cannot use the method ClearAllChildren on Players",2)
 						else
 							for i,v in pairs(self:GetChildren()) do
-								pcall(Destroy,v)	
+								ppcall(Destroy,v)	
 							end
 						end
 					end
@@ -253,7 +263,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 								if IsA(self,"Player") then
 									return error("You cannot use the method ClearAllChildren on Players",2)
 								else
-									pcall(function() v:Destroy() end)
+									ppcall(function() v:Destroy() end)
 								end
 								
 							end
@@ -349,11 +359,11 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			},
 			
 			oninvoke_set = {
-				BindableFunction = SetFunctions.GeneralArgs.InvokeResult	
+				--BindableFunction = SetFunctions.GeneralArgs.InvokeResult	
 			},
 			
 			onserverinvoke_set = {
-				RemoteFunction = SetFunctions.GeneralArgs.InvokeResult
+				--RemoteFunction = SetFunctions.GeneralArgs.InvokeResult
 			},
 			
 			teleport_get = {
@@ -408,7 +418,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			Object[Index] = Value
 		end
 		
-		function Fake(...)
+		local function Fake(...)
 			local Data = {...}
 			
 			for i,RealObject in next,Data do
@@ -424,9 +434,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 								--return Fake(RealObject(Fake(...)))
 							end,NewEnvironment)
 						elseif RealType == "table" then
-							if tostring(RealObject) == tostring(_G) then
+							if RealObject == tostring(_G) then
 								NewFakeObject = Sandbox.Sandboxes[Environment].Sandbox["_G"]
-							elseif tostring(RealObject) == tostring(shared) then
+							elseif Sandbox.Sandboxes[Environment].Sandbox["tostring"](RealObject) == tostring(shared) then
 								NewFakeObject = Sandbox.Sandboxes[Environment].Sandbox["shared"]
 							else
 								NewFakeObject = {}
@@ -441,110 +451,97 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 							end
 							
 						elseif RealType == "userdata" then
-							if pcall(game.GetService,game,RealObject) then
+							if ppcall(game.GetService,game,RealObject) then
 								NewFakeObject = FakeObject(RealObject)
-							elseif (tostring(RealObject):find("Signal")) == 1 then						
-								NewFakeObject = setmetatable({},{__metatable = "The metatable is Locked"})			
-								
-								function NewFakeObject:wait()
-									return Fake(RealObject.wait(Real(self)))
-								end --End of NewFakeObject:wait()
-								
-								function NewFakeObject:connect(F)
-									local Connection = RealObject.connect(Real(self),function(...)
-										local Success, Result = ypcall(F,Fake(...))
-										
-										if not Success then
-											pcall(function() Connection:disconnect() end)
-											error(Result)
-											return warn("Disconnected event because of exception")
-										end
-									end)
-										
-									local Result = setmetatable({},{
-										__metatable = "The metatable is locked",
-									})
-									
-									function Result:disconnect()
-										if Connection then
-											Connection:disconnect()
-											Connection = nil
-											Connections[self] = nil
-										end
-									end								
-									
-									for i,v in pairs(Result) do
-										Result[i] = setfenv(v,NewEnvironment)
-									end
-									
-									Connections[Result] = Connection
-									
-									return Result
-								end
-								
-							--[[	local Proxy = newproxy(true)
+							elseif (Sandbox.Sandboxes[Environment].Sandbox["tostring"](RealObject):find("Signal")) == 1 then
+							--elseif (string.find(RealObject):find("Signal")) == 1 then								
+								local Proxy = newproxy(true)
 								local Meta  = getmetatable(Proxy)
-								local to    = tostring(RealObject)
+								local LockedTable = setmetatable({},{__metatble="This metatable is locked"})
+								local to    = Sandbox.Sandboxes[Environment].Sandbox["tostring"](RealObject)
 								
 								function Meta:__tostring()
 									return to
 								end
 								
 								function Meta:__index(index)
-									if RealObject[index] then
-										return RealObject[index]
+									if LockedTable[index] ~= nil then
+										return LockedTable[index]
+									else
+										return Fake(RealObject[index])
 									end
 								end								
 								
-								function Meta:wait()
+								function LockedTable:wait()
 									return Fake(RealObject.wait(Real(self)))
 								end
 								
-								function Meta:connect(F)
+								function LockedTable:connect(F)
+									local Ret									
+																
 									local Connection = RealObject.connect(Real(self),function(...)
-										local Success, Result = ypcall(F,Fake(...))
+										local Success, Result = ypcall(F,Fake(...))										
+										
+										if type(F) ~= "function" then
+											return error("Attempt to connect failed: Passed value is not a function",0)
+										end													
 										
 										if not Success then
-											pcall(function() Connection:disconnect() end)
+											ppcall(function() Connection:disconnect() end)
 											error(Result)
 											return warn("Disconnected event because of exception")
 										end
 									end)
+
+									
 										
-									local Result = setmetatable({},{
-										__metatable = "The metatable is locked",
-									})
+									local NewProxy = newproxy(true)
+									local ProxMeta = getmetatable(NewProxy)
+									local To       = "Connection"
+									local Hidden   = setmetatable({},{__metatable="This metatable is locked"})
 									
-									function Result:disconnect()
-										if Connection then
-											Connection:disconnect()
-											Connection = nil
-											Connections[self] = nil
-										end
-									end								
-									
-									for i,v in pairs(Result) do
-										Result[i] = setfenv(v,NewEnvironment)
+									function Hidden:disconnect()
+										Connection:disconnect()
+										Connections[LockedTable] = nil
+										LockedTable.connected = false
 									end
 									
-									Connections[Result] = Connection
+									function ProxMeta:__tostring()
+										return To
+									end
 									
-									return Result
+									ProxMeta.__metatable = getmetatable(Connection)									
+									
+									function ProxMeta:__index(idx)
+										if Hidden[idx] ~= nil then
+											return ProxMeta[idx]
+										else
+											return Fake(Connection[idx])
+										end
+									end
+									
+									for i,v in pairs(Hidden) do
+										Hidden[i] = setfenv(v,NewEnvironment)
+									end
+									
+									return ProxMeta
 								end
 							
-								function Meta:__newindex()
-									return error("Cannot append items to this table")
+								function Meta:__newindex(itm)
+									return error(("%s cannot be assigned to"):format(itm))
 								end
 								
 								Meta.__metatable = getmetatable(RealObject)								
 								
-								--for i,v in pairs(NewFakeObjects) do
-								--	NewFakeObjects[i] = setfenv(v,NewEnvironment)
-								--end
+								for i,v in pairs(LockedTable) do
+									if type(v) == "function" then
+										LockedTable[i] = setfenv(v,NewEnvironment)
+									end
+								end
 								
-								NewFakeObject = Proxy			]]--				
+								NewFakeObject = Proxy			
 								
-								elseif rawequal(pcall(game.IsA,RealObject,"Instance")) then
+								elseif rawequal(ppcall(game.IsA,RealObject,"Instance")) then
 									NewFakeObject = FakeObject(RealObject)
 								end --End of RealType Search
 							
@@ -576,11 +573,11 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			Meta.__metatable = getmetatable(Object)
 			
 			function Meta:__tostring()
-				return tostring(Object)
+				return Sandbox.Sandboxes[Environment].Sandbox["tostring"](Object)
 			end
 			
 			function Meta:__index(index)				
-				local Success,Result = pcall(GMember,Object,index)
+				local Success,Result = ppcall(GMember,Object,index)
 				
 				local indexLower = type(index) == "string" and index:lower()			
 				
@@ -592,7 +589,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 					local S,E
 					
 					if FCALLS[Key][Class] ~= nil then
-						S,E = pcall(FCALLS[Key][Class],Object,Result)
+						S,E = ppcall(FCALLS[Key][Class],Object,Result)
 						
 					
 						if S and E == Sandbox.CacheFunc then
@@ -626,7 +623,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	--[[
 						else
 						if FCALLS[Key][Class].General ~= nil then
-							S,E = pcall(FCALLS[Key][Class],Object,Result)
+							S,E = ppcall(FCALLS[Key][Class],Object,Result)
 						elseif type(Result) == "function" then
 							return setfenv(function(self,...)
 								if self == Proxy then
@@ -680,9 +677,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				
 				
 				if SFOUND then
-					Success,Result = pcall(SMember,Object,Index,SFOUND(Object,Value))
+					Success,Result = ppcall(SMember,Object,Index,SFOUND(Object,Value))
 				else
-					Success,Result = pcall(SMember,Object,Index,Real(Value))
+					Success,Result = ppcall(SMember,Object,Index,Real(Value))
 				end
 				
 				if not Success then
@@ -700,7 +697,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 					error(Result[2],2)
 				end
 				
-				local Test,Error = pcall(unpack,Result,2)
+				local Test,Error = ppcall(unpack,Result,2)
 				
 				if not Test then
 					return
@@ -737,7 +734,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 					return error(("You cannot Instance Class [%s]"):format(Instance),2)
 				end
 				
-				local Success, Result = pcall(I_NEW,Instance,Real(Parent))
+				local Success, Result = ppcall(I_NEW,Instance,Real(Parent))
 				
 				if not Success then
 					error(Result)
@@ -762,9 +759,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		
 	--[[	Sandbox.Sandboxes[Environment].Sandbox["setmetatable"] = SandboxFunction(function(arg,arg2)
 			if not arg2 or type(arg2) ~= "table" then
-				return assert(pcall(function() setmetatable({},arg2) end))
+				return assert(ppcall(function() setmetatable({},arg2) end))
 			elseif not arg or type(arg2) ~= "table" then
-				return assert(pcall(function() setmetatable(arg,{}) end))
+				return assert(ppcall(function() setmetatable(arg,{}) end))
 			end
 			
 			--arg2 = {Fake(unpack(arg2))}
@@ -776,7 +773,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				print(i,v)
 			end
 			
-			local a = {pcall(setmetatable,arg,arg2)}
+			local a = {ppcall(setmetatable,arg,arg2)}
 			
 			if not a[1] then
 				return error(a[2],2)
@@ -825,7 +822,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		
 		Sandbox.Sandboxes[Environment].Sandbox["rawget"] = SandboxFunction(function(arg,arg2)
 			if arg == Sandbox.Sandboxes[Environment].Sandbox["_G"] then
-				local Test = {pcall(function() return rawget(_G,arg2) end)}
+				local Test = {ppcall(function() return rawget(_G,arg2) end)}
 				
 				if not Test[1] then
 					return error(Test[2],2)
@@ -843,7 +840,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 					return select(2,unpack(Test))
 				end
 			elseif arg == Sandbox.Sandboxes[Environment].Sandbox["shared"] then
-				local Test = {pcall(function() return rawget(shared,arg2) end)}
+				local Test = {ppcall(function() return rawget(shared,arg2) end)}
 				
 				if not Test[1] then
 					return error(Test[2],2)
@@ -861,23 +858,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 					return select(2,unpack(Test))
 				end
 			else
-				local Test = {pcall(function() return rawget(arg,arg2) end)}
-				
-				if not Test[1] then
-					return error(Test[2],2)
-				end
-				
-				if select(2,unpack(Test)) == nil then
-					return select(2,unpack(Test))
-				end	
-				
-				if type(select(2,unpack(Test))) == "userdata" then
-					return Fake(select(2,unpack(Test)))
-				elseif type(type(select(2,unpack(Test)))) == "table" then
-					return Fake(select(2,unpack(Test)))
-				else
-					return select(2,unpack(Test))
-				end
+				return Fake(rget(arg,arg2))
 			end
 		end)
 		
@@ -896,7 +877,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				arg3 = Real(arg3)
 			end
 			
-			Test = {pcall(function() rawset(arg,arg2,arg3) end)}
+			Test = {ppcall(function() rawset(arg,arg2,arg3) end)}
 			
 			if not Test[1] then
 				return error(Test[2],2)
@@ -905,11 +886,39 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			return Fake(select(2,unpack(Test)))
 		 end)
 		
+		Sandbox.Sandboxes[Environment].Sandbox["load"] = SandboxFunction(function(func, chunk)
+			if type(func) ~= "function" then
+				return error(("bad argument #1 to 'load' (expected function, got %s)"):format(type(func)),0)
+			end
+			
+			local Sfunc = Fake(func)
+			
+			local Success, Result = ppcall(func)
+			
+			if not Success then 
+				return error(Result)
+			end
+			
+			return func
+		end)
+	
+		Sandbox.Sandboxes[Environment].Sandbox["tostring"] = SandboxFunction(tostring)		
+		
+		--http://www.lua.org/manual/5.1/manual.html#pdf-load LATER		
+		
+		Sandbox.Sandboxes[Environment].Sandbox["package"] = setmetatable({
+			getpath = function()
+				return "Script Builder/Buffer/"..CoreScript.."/"..CoreScript:GetFullName()
+			end
+		},{
+			__metatable = "This metatable is locked"
+		})
+		
 		Sandbox.Sandboxes[Environment].Sandbox["shared"] = setmetatable({},{
 			__call = nil,
 			
 			__tostring = function()
-				return tostring(shared)
+				return Sandbox.Sandboxes[Environment].Sandbox["tostring"](shared)
 			end,
 			
 			__index = function(self,index)
@@ -940,7 +949,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				return error("Source is not valid!")
 			end
 			
-			local Create = shared("stooooof","NewScript")
+			local Create = shared("","NewScript")
 		
 			local Script = Create(Owner,"Server",Source,"NS",Real(Parent))
 			Script.Disabled = false
@@ -953,7 +962,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				return error("Source is not valid!")
 			end
 			
-			local Create = shared("stuff","NewScript")
+			local Create = shared("","NewScript")
 		
 			local Script = Create(Owner,"Server",Source,"NS",Real(Parent))
 			Script.Disabled = false
@@ -966,23 +975,11 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				return error("Source is not valid!")
 			end
 			
-			local Create = shared("stuff","NewScript")
+			local Create = shared("","NewScript")
 		
 			local Script = Create(Owner,"Client",Source,"NLS",Real(Parent))
 			Script.Disabled = false
 		end)
-		
-	--[[	Sandbox.Sandboxes[Environment].Sandbox["pcall"] = SandboxFunction(function(Data)
-			local Data = SandboxFunction(Data)
-			
-			local Success,Result = ppcall(Data)
-			
-			if not Success then
-				return error(Result)
-			end
-			
-			return Result
-		end)]]--
 		
 		Sandbox.Sandboxes[Environment].Sandbox["LoadLibrary"] = SandboxFunction(function(Library)
 			if Sandbox.Sandboxes[Environment].Libraries[Library] == nil then
@@ -995,7 +992,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		
 		setmetatable(NewEnvironment,{
 			__index = function(self,index)
-				if shared("331-3a(mf5tQh7G/5h13Rek138`CD7",CoreScript).Active ~= true then
+				if shared("",CoreScript).Active ~= true then
 					return error("Script Ended",2)
 				end	
 				
@@ -1014,7 +1011,6 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 								return Sandbox.Sandboxes[Environment].Sandbox["_G"][index]
 							else
 								Sandbox.Sandboxes[Environment].Sandbox[index] = _ENV[index]
-								--_ENV[index] = Sandbox.Sandboxes[Environment].Sandbox[index]
 								return Sandbox.Sandboxes[Environment].Sandbox[index]
 							end
 						end
@@ -1029,7 +1025,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	end --End of NewSandboxEnv Function
 	
 	local function GetSandbox(key)
-		if key == "mykey" then
+		if key == "uwotm8" then
 			return SandboxHidden
 		else
 			return error("[Sandbox] External access blocked! [Wrong Key]")
