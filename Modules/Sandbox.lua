@@ -33,6 +33,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	local game     = game
 	local rawget   = rawget
 	local rawset   = rawset
+	local yypcall  = ypcall	
 	
 	local Data = {
 		AllowedIds = {
@@ -87,7 +88,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			__newindex = nil,
 			
 			__call = function(self,key)
-				if key == "uwotm8" then
+				if key == "" then
 					return Sandbox
 				end
 			end,		
@@ -191,7 +192,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		local Connections    = {}
 		local OutputENV      = {}
 		local is             = IsA
-		local FakeObject,Fake,Real
+		local FakeObject,Fake,Real,SandboxFunction
 		
 		
 		local lockedInstances = {}
@@ -207,38 +208,38 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		local SetFunctions = {		
 			BlockedPlayerArgs = {
 				Kick = function()
-					return function(self)
-						if self:is("Player") then
+					return SandboxFunction(function(self)
+						if IsA(self,"Player") and type(self) == "userdata" then
 							return error("You cannot Kick Players",2)
 						else
 							return error(('The function Kick is not a member of "%s"'):format(self.className))
 						end
-					end
+					end)
 				end,
 				
 				Destroy = function()
-					return function(self)
-						if self:is("Player") then
+					return SandboxFunction(function(self)
+						if IsA(self,"Player") and type(self) == "userdata" then
 							return error("You cannot Destroy Players",2)
 						else
 							return ppcall(Destroy,self)
 						end
-					end
+					end)
 				end,
 				
 				Remove = function()
-					return function(self)
-						if self:is("Player") then
+					return SandboxFunction(function(self)
+						if IsA(self,"Player") and type(self) == "userdata" then
 							return error("You cannot Remove Players",2)
 						else
 							return ppcall(Remove,self)
 						end
-					end
+					end)
 				end,
 				
 				ClearAllChildren = function()
 					return function(self)
-						if self:is("Player") then
+						if IsA(self,"Player") and type(self) == "userdata" then
 							return error("You cannot use the method ClearAllChildren on Players",2)
 						else
 							for i,v in pairs(self:GetChildren()) do
@@ -371,21 +372,6 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			},
 		}
 		
-	--[[	FCALLS = {}
-		
-		for i,v in pairs(SetFunctions.GeneralArgs) do
-			FCALLS[i.."_get"] = v
-		end
-		
-		function FCALLS.destroy_get()
-			return function(self)
-				if Instances.Locked[self] == true then
-					return error(string.format("Cannot destroy %s",self))
-				end 
-				Destroy(self)
-			end
-		end]]--
-		
 		local function Real(...)
 			local Data = {...}
 			
@@ -431,7 +417,6 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 						if RealType == "function" then
 							NewFakeObject = setfenv(function(...)							
 								return Fake(RealObject(Real(...)))
-								--return Fake(RealObject(Fake(...)))
 							end,NewEnvironment)
 						elseif RealType == "table" then
 							if RealObject == tostring(_G) then
@@ -619,40 +604,6 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				elseif Instances.Locked[index] == true then
 					return error(index.." is not a valid member of "..Class,2)	
 				end			
-				
-	--[[
-						else
-						if FCALLS[Key][Class].General ~= nil then
-							S,E = ppcall(FCALLS[Key][Class],Object,Result)
-						elseif type(Result) == "function" then
-							return setfenv(function(self,...)
-								if self == Proxy then
-									return Fake(Result(Object,Real(...)))
-								else
-									local F_ENV = setfenv(Object[index](self),NewEnvironment)
-									return setfenv(Fake(F_ENV),NewEnvironment)
-								end
-							end,NewEnvironment)
-						end
-	--]]			
-				
-	--[[			if type(index) ~= "string" then
-					error(Result:match("%S+:%d+: (.*)$") or Result,2)
-				elseif not Success then
-					error(index.." is not a valid member of "..Class,2) --Stack 2
-				else
-					local indexLower = index:lower().."_get"
-					local SFOUND = FCALLS[indexLower] and (FCALLS[indexLower][Class] or FCALLS[indexLower].General) or nil
-					
-					if SFOUND then				
-						return setfenv(function(self,...)
-							if self == Proxy then
-								return Fake(SFOUND(Object,Result))
-							else
-								local F_ENV = setfenv(SFOUND(Object,Result),NewEnvironment)
-								return setfenv(Fake(F_ENV),NewEnvironment)
-							end
-						end,NewEnvironment)]]--
 					if type(Result) == "function" then
 						return setfenv(function(self,...)
 							if self == Proxy then
@@ -690,8 +641,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			return Proxy
 		end
 		
-		local function SandboxFunction(Function)
+		function SandboxFunction(Function)
 			return setfenv(function(...)
+				local ypcall = yypcall
 				local Result = {ypcall(Function,...)}
 				if not Result[1] then
 					error(Result[2],2)
@@ -708,7 +660,6 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		end
 		
 		for i,v in pairs(Sandbox.Sandboxes[Environment].ENVFunctions) do
-			--Sandbox.Sandboxes[Environment].Sandbox[i] = SandboxFunction(v)
 			Sandbox.Sandboxes[Environment].Sandbox[i] = setfenv(v,NewEnvironment)
 		end
 		
@@ -1025,7 +976,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	end --End of NewSandboxEnv Function
 	
 	local function GetSandbox(key)
-		if key == "uwotm8" then
+		if key == "" then
 			return SandboxHidden
 		else
 			return error("[Sandbox] External access blocked! [Wrong Key]")
