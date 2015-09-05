@@ -70,13 +70,14 @@ local Sandbox = {
 	CacheFunc = {},
 	GlobalENVFunctions = setmetatable({
 		["require"] = function(asset)
+			--return error('This service is not yet active!',0)
 			local Type = type(asset)
 			if Type == "number" then
 				if Data.AllowedIds[asset] == true then -- cuz why not?
 					return require(asset)
 				end
 			elseif Type == "userdata" then
-				local isReal, Return = ppcall(game.IsA,game,asset,"ModuleScript")
+				local isReal, Return = pcall(game.IsA,game,asset,"ModuleScript")
 				if isReal then
 					return require(asset)
 				else
@@ -639,7 +640,12 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels,Owner) -- ..
 		function Meta:__index(index)				
 			local Success,Result = ppcall(GMember,Object,index)
 			
-			local indexLower = type(index) == "string" and index:lower()			
+			local indexLower
+			if type(index) ~= "string" then -- its crude but it patches it.
+				indexLower = false
+			else
+				indexLower = index:lower()
+			end
 			
 			if not indexLower then
 				error(Result:match("%S+:%d+: (.*)$") or Result,0)
@@ -898,7 +904,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels,Owner) -- ..
 			else
 				if UseGENV == true then
 					if Sandbox.GlobalENVFunctions[index] ~= nil then
-						return SandboxFunction(Sandbox.GlobalENVFunctions[index])
+						return Fake(Sandbox.GlobalENVFunctions[index])
 					else
 						if _ENV[index] == nil then
 							return _G[index] or nil
