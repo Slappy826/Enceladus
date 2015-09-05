@@ -20,7 +20,7 @@ local CoreUserdataCache = {}
 local TableCache = {}
 local ModuleBuffer = {}
 
-if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285072360 then
+if game.PlaceId ~= 191240586 and game.PlaceId ~= 254275637 and game.PlaceId ~= 285072360 then
 	warn("Loaded sandbox at the wrong place!")
 	return nil
 end
