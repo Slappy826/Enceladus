@@ -66,7 +66,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		CacheFunc = {},
 		GlobalENVFunctions = setmetatable({
 			["require"] = function(asset)
-				return warn'This service is not yet active!'
+				return error('This service is not yet active!',0)
 				--[[if type(asset) == "number" then
 					if Data.AllowedIds[asset] then
 						require(asset)
@@ -106,7 +106,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			__newindex = nil,
 			
 			__call = function(self,key)
-				if key == "" then
+				if key == "asd" then
 					return Sandbox
 				end
 			end,		
@@ -449,12 +449,14 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 						local NewFakeObject = fakeObjects[RealObject]
 						
 						if not NewFakeObject then
+							--if RealType == "function" and not pcall(setfenv,RealObject,getfenv(RealObject)) then
 							if RealType == "function" then
 								if FakeFuncs[RealObject] then
 									NewFakeObject = FakeFuncs[RealObject]
 								else
 									NewFakeObject = setfenv(function(...)						
-										return Fake(RealObject(Real(...)))	
+										--return Fake(RealObject(Real(...)))	
+										return Fake(RealObject(Real(...)))
 									end,NewEnvironment)								
 								end
 								FakeFuncs[NewFakeObject] = NewFakeObject
@@ -529,8 +531,6 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 											end
 										end)
 	
-										
-											
 										local NewProxy = newproxy(true)
 										local ProxMeta = getmetatable(NewProxy)
 										local To       = "Connection"
@@ -550,7 +550,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 										
 										function ProxMeta:__index(idx)
 											if Hidden[idx] ~= nil then
-												return ProxMeta[idx]
+												return Hidden[idx]
 											else
 												return Fake(Connection[idx])
 											end
@@ -560,7 +560,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 											Hidden[i] = setfenv(v,NewEnvironment)
 										end
 										
-										return ProxMeta
+										return NewProxy
 									end
 								
 									function Meta:__newindex(itm)
@@ -902,7 +902,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	end --End of NewSandboxEnv Function
 	
 	local function GetSandbox(key)
-		if key == "" then
+		if key == "asd" then
 			return SandboxHidden
 		else
 			return error("[Sandbox] External access blocked! [Wrong Key]",0)
