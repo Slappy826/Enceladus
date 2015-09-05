@@ -889,7 +889,7 @@ function Sandbox:SetNewSandbox(Environment,UseGENV,UseContextLevels,Owner) -- ..
 						return Fake(Sandbox.GlobalENVFunctions[index])
 					else
 						if _ENV[index] == nil then
-							return _G
+							return _G[index] or nil
 						else
 							Sandbox.Sandboxes[Environment].Sandbox[index] = _ENV[index]
 							return Sandbox.Sandboxes[Environment].Sandbox[index]
