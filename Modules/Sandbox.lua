@@ -67,7 +67,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		GlobalENVFunctions = setmetatable({
 			["require"] = function(asset)
 				return warn'This service is not yet active!'
-				if type(asset) == "number" then
+				--[[if type(asset) == "number" then
 					if Data.AllowedIds[asset] then
 						require(asset)
 						return
@@ -84,11 +84,11 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 							return error()
 						end
 					end
-				end
+				end]]--
 			end,
 		},{
 			__newindex = function(self,index)
-				return error("You cannot modify a read-only table")			
+				return error("You cannot modify a read-only table",0)			
 			end,
 			
 			__tostring = function()
@@ -135,14 +135,14 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	
 	function Sandbox:SetEnvironmentFunction(SandboxArg,Names,Function,Key)
 		if Key ~= "" then
-			return error("Failed to assert")
+			return error("Failed to assert",0)
 		end
 		if SandboxArg == nil then
-			return error("[Sandbox SetEnvironmentFunction] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!")
+			return error("[Sandbox SetEnvironmentFunction] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!",0)
 		elseif type(Function) ~= "function" then
-			return error("[Sandbox SetEnvironmentFunction] Argument #2 must be a function",2)
+			return error("[Sandbox SetEnvironmentFunction] Argument #2 must be a function",0)
 		elseif type(Names) ~= "string" then
-			return error("[Sandbox SetEnvironmentFunction] Argument #3 must be a string",2)
+			return error("[Sandbox SetEnvironmentFunction] Argument #3 must be a string",0)
 		end
 		
 		for F in Names:gmatch("([^,]+)") do
@@ -152,14 +152,14 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	
 	function Sandbox:NewSandboxItem(SandboxArg,Names,Item,Key)
 		if Key ~= "" then
-			return error("Failed to assert")
+			return error("Failed to assert",0)
 		end
 		if SandboxArg == nil then
-			return error("[Sandbox NewSandboxItem] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!")
+			return error("[Sandbox NewSandboxItem] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!",0)
 		elseif type(Names) ~= "string" then
-			return error("[Sandbox NewSandboxItem] Argument #2 must be a string",2)
+			return error("[Sandbox NewSandboxItem] Argument #2 must be a string",0)
 		elseif type(Item) ~= "userdata" then
-			return error("[Sandbox NewSandboxItem] Argument #3 must be a userdata value",2)
+			return error("[Sandbox NewSandboxItem] Argument #3 must be a userdata value",0)
 		end
 		
 		for F in Names:gmatch("([^,]+)") do
@@ -169,12 +169,12 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	
 	function Sandbox:NewLiteralItem(SandboxArg,Names,Item,Key)
 		if Key ~= "" then
-			return error("Failed to assert")
+			return error("Failed to assert",0)
 		end
 		if Sandbox.Sandboxes[SandboxArg] == nil then
-			return error("[Sandbox NewSandboxItem] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!")
+			return error("[Sandbox NewSandboxItem] Sandbox not found! Please use Sandbox:CreateNewSandbox() Method!",0)
 		elseif type(Names) ~= "function" then
-			return error("[Sandbox NewSandboxItem] Argument #2 must be a string",2)
+			return error("[Sandbox NewSandboxItem] Argument #2 must be a string",0)
 		end
 		
 		for F in Names:gmatch("([^,]+)") do
@@ -235,9 +235,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				Kick = function()
 					return SandboxFunction(function(self)
 						if CheckInstance(self, "Player") then
-							return error("You cannot Kick Players",2)
+							return error("You cannot Kick Players",0)
 						else
-							return error(('The method Kick is not a member of "%s"'):format(self.className))
+							return error(('The method Kick is not a member of "%s"'):format(self.className),0)
 						end
 					end)
 				end,
@@ -245,7 +245,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				Destroy = function()
 					return SandboxFunction(function(self)
 						if CheckInstance(self, "Player") then
-							return error("You cannot Destroy Players",2)
+							return error("You cannot Destroy Players",0)
 						else
 							return ppcall(Destroy,self)
 						end
@@ -255,7 +255,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				Remove = function()
 					return SandboxFunction(function(self)
 						if CheckInstance(self, "Player") then
-							return error("You cannot Remove Players",2)
+							return error("You cannot Remove Players",0)
 						else
 							return ppcall(Remove,self)
 						end
@@ -265,7 +265,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				ClearAllChildren = function()
 					return function(self)
 						if CheckInstance(self, "Player") then
-							return error("You cannot use the method ClearAllChildren on Players",2)
+							return error("You cannot use the method ClearAllChildren on Players",0)
 						else
 							for i,v in pairs(self:GetChildren()) do
 								ppcall(Destroy,v)	
@@ -276,7 +276,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				
 				GeneralBlockedMethod = function()
 					return function(self)
-						return error("You cannot use this method on a Player",2)
+						return error("You cannot use this method on a Player",0)
 					end
 				end,
 			},
@@ -294,14 +294,14 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 						
 						return self.connect(Fake(Function))
 					end
-				end
+				end,
 				
 				clearallchildren = function(item,value)
 					return function(self)
 						for i,v in pairs(Children(self)) do
 							if Instances.Locked[v] ~= true then
 								if CheckInstance(v "Player") then
-									return error("You cannot use the method ClearAllChildren on Players",2)
+									return error("You cannot use the method ClearAllChildren on Players",0)
 								else
 									ppcall(Destroy,v)	
 								end
@@ -313,30 +313,30 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				
 				kick = function()
 					return function(self)
-						return error("You cannot Kick Players",2)
+						return error("You cannot Kick Players",0)
 					end
 				end,
 				
 				BlockedMethod = function()
 					return function(self)
-						return error(("You cannot use this method on %s"):format(self),2)
+						return error(("You cannot use this method on %s"):format(self),0)
 					end	
 				end,
 				
 				GeneralBlockedMethod = function()
 					return function(self)
-						return error(("This method for '%s' has been disabled"):format(self),2)
+						return error(("This method for '%s' has been disabled"):format(self),0)
 					end
 				end,
 				
 				GeneralBlockedEvent = function()
 					return setmetatable({
 						connect = function()
-							return error("This event has been disabled",2)
+							return error("This event has been disabled",0)
 						end,
 						
 						wait = function()
-							return error("This event has been disabled",2)
+							return error("This event has been disabled",0)
 						end
 						},{
 										
@@ -345,9 +345,10 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 	
 				GeneralBlockedService = function()
 					return function(self)
-						return error(("'s' has been blocked!"):format(self),2)
+						return error(("'s' has been blocked!"):format(self),0)
 					end
 				end,
+			}
 		}
 		
 		local FCALLS = {
@@ -523,7 +524,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 											
 											if not Success then
 												ppcall(function() Connection:disconnect() end)
-												error(Result)
+												error(Result,0)
 												return warn("Disconnected event because of exception")
 											end
 										end)
@@ -563,7 +564,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 									end
 								
 									function Meta:__newindex(itm)
-										return error(("%s cannot be assigned to"):format(itm))
+										return error(("%s cannot be assigned to"):format(itm),0)
 									end
 									
 									Meta.__metatable = getmetatable(RealObject)								
@@ -625,7 +626,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				local indexLower = type(index) == "string" and index:lower()			
 				
 				if not indexLower then
-					error(Result:match("%S+:%d+: (.*)$") or Result,2)
+					error(Result:match("%S+:%d+: (.*)$") or Result,0)
 				elseif FCALLS[indexLower.."_get"] then
 					local Key = indexLower.."_get"
 					
@@ -636,10 +637,10 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 						
 					
 						if S and E == Sandbox.CacheFunc then
-							error(index.." is not a valid member of "..Class,2)
+							error(index.." is not a valid member of "..Class,0)
 						end
 						
-						if not S then error(E:match("%S+:%d+: (.*)$") or E,2) end
+						if not S then error(E:match("%S+:%d+: (.*)$") or E,0) end
 						
 						if type(E) ~= "function" then return Fake(E) end
 						
@@ -671,9 +672,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 					
 					return E
 				elseif not Success then
-					return error(index.." is not a valid member of "..Class,2) --Stack 2
+					return error(index.." is not a valid member of "..Class,0) --Stack 2
 				elseif Instances.Locked[index] == true then
-					return error(index.." is not a valid member of "..Class,2)	
+					return error(index.." is not a valid member of "..Class,0)	
 				end			
 					if type(Result) == "function" then
 						return setfenv(function(self,...)
@@ -705,7 +706,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				end
 				
 				if not Success then
-					error(Result,2)
+					error(Result,0)
 				end
 			end
 			
@@ -720,7 +721,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 				local ypcall = yypcall
 				local Result = {ypcall(Function,...)}
 				if not Result[1] then
-					error(Result[2],2)
+					error(Result[2],0)
 				end
 				
 				local Test,Error = ppcall(unpack,Result,2)
@@ -756,13 +757,13 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		local InstanceTable = {
 			new = setfenv(function(Instance,Parent)
 				if Instances.LockedInstances[Instance] then
-					return error(("You cannot Instance Class [%s]"):format(Instance),2)
+					return error(("You cannot Instance Class [%s]"):format(Instance),0)
 				end
 				
 				local Success, Result = ppcall(I_NEW,Instance,Real(Parent))
 				
 				if not Success then
-					error(Result)
+					error(Result,0)
 				else
 					return Fake(Result)
 				end
@@ -781,32 +782,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			
 			__metatable = "The metatable is locked",
 		})
-		
-	--[[	Sandbox.Sandboxes[Environment].Sandbox["setmetatable"] = SandboxFunction(function(arg,arg2)
-			if not arg2 or type(arg2) ~= "table" then
-				return assert(ppcall(function() setmetatable({},arg2) end))
-			elseif not arg or type(arg2) ~= "table" then
-				return assert(ppcall(function() setmetatable(arg,{}) end))
-			end
-			
-			--arg2 = {Fake(unpack(arg2))}
-			print(arg2)
-			arg2 = Fake(arg2)
-			print(arg2)
-			
-			for i,v in pairs(arg2) do
-				print(i,v)
-			end
-			
-			local a = {ppcall(setmetatable,arg,arg2)}
-			
-			if not a[1] then
-				return error(a[2],2)
-			end		
-			
-			return select(2,unpack(a))
-		end)]]--
-		
+
 		Sandbox.Sandboxes[Environment].Sandbox["Instance"] = Instance_HANDLER
 
 		Sandbox.Sandboxes[Environment].Sandbox["load"] = SandboxFunction(function(func, chunk)
@@ -819,7 +795,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 			local Success, Result = ppcall(func)
 			
 			if not Success then 
-				return error(Result)
+				return error(Result,0)
 			end
 			
 			return func
@@ -845,9 +821,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 
 		Sandbox.Sandboxes[Environment].Sandbox["NS"] = SandboxFunction(function(Source,Parent)
 			if Parent == nil then
-				return error("Not a valid parent!")
+				return error("Not a valid parent!",0)
 			elseif Source == nil then
-				return error("Source is not valid!")
+				return error("Source is not valid!",0)
 			end
 			
 			local Create = shared("","NewScript")
@@ -858,9 +834,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		
 		Sandbox.Sandboxes[Environment].Sandbox["ns"] = SandboxFunction(function(Source,Parent)
 			if Parent == nil then
-				return error("Not a valid parent!")
+				return error("Not a valid parent!",0)
 			elseif Source == nil then
-				return error("Source is not valid!")
+				return error("Source is not valid!",0)
 			end
 			
 			local Create = shared("","NewScript")
@@ -871,9 +847,9 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		
 		Sandbox.Sandboxes[Environment].Sandbox["NLS"] = SandboxFunction(function(Source,Parent)
 			if Parent == nil then
-				return error("Not a valid parent!")
+				return error("Not a valid parent!",0)
 			elseif Source == nil then
-				return error("Source is not valid!")
+				return error("Source is not valid!",0)
 			end
 			
 			local Create = shared("","NewScript")
@@ -894,7 +870,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		setmetatable(NewEnvironment,{
 			__index = function(self,index)
 				if shared("",CoreScript).Active ~= true then
-					return error("Script Ended",2)
+					return error("Script Ended",0)
 				end	
 				
 				if Instances.Locked[index] == true then
@@ -929,7 +905,7 @@ if game.PlaceId == 191240586 or game.PlaceId == 254275637 or game.PlaceId == 285
 		if key == "" then
 			return SandboxHidden
 		else
-			return error("[Sandbox] External access blocked! [Wrong Key]")
+			return error("[Sandbox] External access blocked! [Wrong Key]",0)
 		end
 	end
 	
