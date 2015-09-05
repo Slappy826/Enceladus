@@ -13,17 +13,17 @@
 		-Level Context 
 ]]--
 
+if game.PlaceId ~= 191240586 and game.PlaceId ~= 254275637 and game.PlaceId ~= 285072360 then
+	warn("Loaded sandbox at the wrong place!")
+	return nil
+end
+
 local GetSandbox = nil
 local SandboxHidden = nil
 local FakeFuncs = {}
 local CoreUserdataCache = {}
 local TableCache = {}
 local ModuleBuffer = {}
-
-if game.PlaceId ~= 191240586 and game.PlaceId ~= 254275637 and game.PlaceId ~= 285072360 then
-	warn("Loaded sandbox at the wrong place!")
-	return nil
-end
 
 local _ENV = getfenv(0)
 local RBXU = LoadLibrary("RbxUtility")
@@ -70,7 +70,20 @@ local Sandbox = {
 	CacheFunc = {},
 	GlobalENVFunctions = setmetatable({
 		["require"] = function(asset)
-			return error('This service is not yet active!',0)
+			--return error('This service is not yet active!',0)
+			local Type = type(asset)
+			if Type == "number" then
+				if Data.AllowedIds[asset] == true then -- cuz why not?
+					return require(asset)
+				end
+			elseif Type == "userdata" then
+				local isReal, Return = pcall(game.IsA,game,asset,"ModuleScript")
+				if isReal then
+					return require(asset)
+				else
+					return error(Return, 0)
+				end
+			end
 			--[[if type(asset) == "number" then
 				if Data.AllowedIds[asset] then
 					require(asset)
